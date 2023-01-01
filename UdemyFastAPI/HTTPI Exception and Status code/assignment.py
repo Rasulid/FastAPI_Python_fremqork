@@ -48,18 +48,25 @@ async def negative_number(request: Request,
 
 
 
+#_________________________________________________Assignment------------------------------------------------------------------
 
 @app.post('/books/login')
-async def book_login(username: str = Form(...), password: str = Form(...)):
-    return {'username':username,
-            'password':password}
-#_________________________________________________login
+async def book_login(book_id : int,username:Optional[ str] = Header(None), password: Optional[ str] = Header(None)):
+
+
+    if username == "FastAPIUser" and password == "test1234!":
+        return BOOKS[book_id]
+    raise HTTPException(status_code=404 , headers={"Message": 'Invalid User'})
+#_________________________________________________Assignment------------------------------------------------------------------
 
 
 
 @app.get('/heder')
 async def read_header(random_header: Optional[str] = Header(None)):
     return {'random-header':random_header}
+
+
+
 @app.get('/')
 async def read_all_books(books_to_return: Optional[int] = None):
     if books_to_return and books_to_return < 0:
@@ -158,5 +165,4 @@ def create_book_without_ip():
 def raise_item_not_founded():
     return HTTPException(status_code=404, detail="Book is not defined",
                          headers={'X-Header-Error': "Not found the book UUID"})
-
 
