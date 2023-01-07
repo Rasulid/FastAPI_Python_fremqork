@@ -1,18 +1,15 @@
-from pydantic import BaseModel, Field
-from typing import Optional
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from DataBase import Base
 
 
-class Users(Base):
-    __tablename__ = "users"
-
+class User(Base):
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
-    first_name = Column(String)
-    last_name = Column(String)
+    name = Column(String)
+    surname = Column(String)
+    email = Column(String, unique=True, index=False)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
 
@@ -20,19 +17,12 @@ class Users(Base):
 
 
 class Todos(Base):
-    __tablename__ = "todos"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
+    __tablename__ = 'todos'
+    id = Column(Integer, primary_key=True)
+    owner_id = Column(Integer, ForeignKey('users.id'))
+    title = Column(String, nullable=False)
     description = Column(String)
     priority = Column(Integer)
     complete = Column(Boolean, default=False)
-    owner_id = Column(Integer, ForeignKey("users.id"))
 
-    owner = relationship("Users", back_populates="todos")
-
-class ToDo(BaseModel):
-    title: str
-    description: Optional[str]
-    priority: int = Field(gt=0, lt=6, description='The priority must be between 1-5 ')
-    complete: bool
+    owner = relationship('User', back_populates="todos")
