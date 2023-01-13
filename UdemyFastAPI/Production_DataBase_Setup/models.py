@@ -7,8 +7,8 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    name = Column(String)
-    surname = Column(String)
+    first_name = Column(String)
+    last_name = Column(String)
     email = Column(String, unique=True, index=False)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
@@ -19,10 +19,9 @@ class User(Base):
 class Todos(Base):
     __tablename__ = 'todos'
     id = Column(Integer, primary_key=True)
-    owner_id = Column(Integer, ForeignKey('users.id'))
     title = Column(String, nullable=False)
     description = Column(String)
     priority = Column(Integer)
     complete = Column(Boolean, default=False)
-
+    owner_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship('User', back_populates="todos")

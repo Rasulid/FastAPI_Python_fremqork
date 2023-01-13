@@ -4,11 +4,13 @@ import models
 from DataBase import engine, SessionLocal
 from pydantic import BaseModel, Field
 from typing import Optional
-from auth import get_current_user ,get_user_exceptions
-
+from Router.auth import get_current_user, get_user_exceptions
+from Router import auth
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
+app.include_router(auth.router)
 
 
 class ToDo(BaseModel):
@@ -36,27 +38,30 @@ async def read_all_by_user(user: dict = Depends(get_current_user),
                            db: Session = Depends(get_db)):
     if user is None:
         raise get_user_exceptions()
-    return db.query(models.Todos)\
-        .filter(models.Todos.owner_id == user.get("id"))\
+    return db.query(models.Todos) \
+        .filter(models.Todos.owner_id == user.get("id")) \
         .all()
 
-#______________________________________________
+
+# ______________________________________________
 @app.get("/todo/{todo_id}")
 async def read_todo(todo_id: int,
                     user: dict = Depends(get_current_user),
                     db: Session = Depends(get_db)):
     if user is None:
         raise get_user_exceptions()
-    todo_model = db.query(models.Todos)\
-        .filter(models.Todos.id == todo_id)\
-        .filter(models.Todos.owner_id == user.get("id"))\
+    todo_model = db.query(models.Todos) \
+        .filter(models.Todos.id == todo_id) \
+        .filter(models.Todos.owner_id == user.get("id")) \
         .first()
     if todo_model is not None:
         return todo_model
     raise http_xception()
-#______________________________________________
 
-#______________________________________________идентификатор пользователя(post reques)
+
+# ______________________________________________
+
+# ______________________________________________идентификатор пользователя(post reques)
 
 @app.post('/')
 async def create_todo(todo: ToDo,
@@ -69,7 +74,7 @@ async def create_todo(todo: ToDo,
     models_Todo.description = todo.description
     models_Todo.priority = todo.priority
     models_Todo.complete = todo.complete
-#______________________________________________идентификатор пользователя(post reques)
+    # ______________________________________________идентификатор пользователя(post reques)
     models_Todo.owner_id = user.get("id")
 
     db.add(models_Todo)
@@ -88,11 +93,11 @@ async def update_tod(todo_id: int,
                      db: Session = Depends(get_db)):
     if user is None:
         raise get_user_exceptions()
-    todo_model = db.query(models.Todos)\
-        .filter(models.Todos.id == todo_id)\
-        .filter(models.Todos.owner_id == user.get("id"))\
+    todo_model = db.query(models.Todos) \
+        .filter(models.Todos.id == todo_id) \
+        .filter(models.Todos.owner_id == user.get("id")) \
         .first()
-#_________________________________________________________________put reques (идентификатор пользователя)
+    # _________________________________________________________________put reques (идентификатор пользователя)
     if todo_model is None:
         raise http_xception()
 
@@ -104,7 +109,8 @@ async def update_tod(todo_id: int,
     db.add(todo_model)
     db.commit()
 
-#______________________________________________________delete request
+
+# ______________________________________________________delete request
 
 @app.delete('/{todo_id}')
 async def delete_todo(todo_id: int,
@@ -112,16 +118,17 @@ async def delete_todo(todo_id: int,
                       db: Session = Depends(get_db)):
     if user is None:
         raise get_user_exceptions()
-    todo_model = db.query(models.Todos)\
-        .filter(models.Todos.id == todo_id)\
-        .filter(models.Todos.owner_id == user.get("id"))\
+    todo_model = db.query(models.Todos) \
+        .filter(models.Todos.id == todo_id) \
+        .filter(models.Todos.owner_id == user.get("id")) \
         .delete()
 
     db.commit()
     SuccessfulResponses(204)
     return todo_model
 
-#______________________________________________________delete request
+
+# ______________________________________________________delete request
 
 def SuccessfulResponses(status_code: int):
     return {

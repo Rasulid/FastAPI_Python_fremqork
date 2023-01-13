@@ -2,17 +2,20 @@ from fastapi import FastAPI, Depends , HTTPException
 import models
 from DataBase import engine, SessionLocal
 from sqlalchemy.orm import Session
-from pydantic import BaseModel , Field
+from pydantic import BaseModel, Field
 from typing import Optional
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
 
 class ToDo(BaseModel):
     title: str
     description: Optional[str]
     priority: int = Field(gt=0, lt=6, description='The priority must be between 1-5 ')
     complete: bool
+
+
 def get_db():
     try:
         db = SessionLocal()
@@ -76,11 +79,12 @@ async def delete_todo(todo_id: int, db: Session = Depends(get_db)):
     return todo_model
 
 
-def SuccessfulResponses(status_code:int):
+def SuccessfulResponses(status_code: int):
     return {
         "status":status_code,
         'transaction': 'successfully',
     }
+
 
 def http_xception():
     raise HTTPException(status_code=404, detail="Todo not found")

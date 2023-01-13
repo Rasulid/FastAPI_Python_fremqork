@@ -24,7 +24,7 @@ class CreateUser(BaseModel):  # модель создания Польвотел
 # ______________________________________________________
 
 
-aoth2_bear = OAuth2PasswordBearer(
+oauth2_bearer = OAuth2PasswordBearer(
     tokenUrl="token")  # мы собираемся иззвлечь любые данные или что нибудь из заголовка авторизации
 # ______________________________________________________
 
@@ -76,25 +76,25 @@ def create_access_token(username: str, user_id: int,  # создаём токе�
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-@app.post("decode/token") #декодировани веб токена JWT
-async def get_current_user(token: str = Depends(aoth2_bear)):
+# @app.post("decode/token") #декодировани веб токена JWT
+async def get_current_user(token: str = Depends(oauth2_bearer)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
             raise get_user_exceptions()
-        return {"username": username, "user_id": user_id}
+        return {"username": username, "id": user_id}
     except JWTError:
-        raise HTTPException(status_code=404, detail="not working")
+        raise get_user_exceptions()
 
 
 @app.post('/create/user')  # создания пользователя и пушем в таблицу
 async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)):
     create_user_model = models.User()
     create_user_model.email = create_user.email
-    create_user_model.name = create_user.first_name
-    create_user_model.surname = create_user.last_name
+    create_user_model.first_name = create_user.first_name
+    create_user_model.last_name = create_user.last_name
 
     hash_password = get_password_hash(create_user.password)
 
@@ -107,9 +107,9 @@ async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)
 
 
 @app.post('/token')  # проверяем пароль и имя пользователя
-async def login_for_access_token(from_data: OAuth2PasswordRequestForm = Depends()
-                                 , db: Session = Depends(get_db)):
-    user = authenticate_user(from_data.username, from_data.password, db)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
+                                 db: Session = Depends(get_db)):
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise token_exception()
     token_expires = timedelta(minutes=20)
@@ -117,6 +117,7 @@ async def login_for_access_token(from_data: OAuth2PasswordRequestForm = Depends(
                                 user.id,
                                 expires_delta=token_expires)
     return {"token": token}
+
 
 # Exceptions
 

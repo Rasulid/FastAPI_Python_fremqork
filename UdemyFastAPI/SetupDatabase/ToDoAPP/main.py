@@ -62,11 +62,18 @@ async def update_todo(todo_id: int, todo: ToDo, db: Session = Depends(get_db)):
 
 
 @app.delete('/{delete_todo}')
-async def delete_todo(todo_id: int , db: Session = Depends(get_db)):
+async def delete_todo(todo_id: int, db: Session = Depends(get_db)):
     todo_model = db.query(models.Todos).filter(models.Todos.id == todo_id).delete()
 
     db.commit()
-    return {'message': "delete"}
+    succssesful_responce(204)
+    return todo_model
+
+def succssesful_responce(status_code:int):
+    return {
+        "status":status_code,
+        'transaction': 'successfully',
+    }
 
 def http_xception():
-    raise HTTPException(status_code=404 , detail="Todo not found")
+    raise HTTPException(status_code=404, detail="Todo not found")
