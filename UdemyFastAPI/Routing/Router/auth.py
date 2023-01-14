@@ -10,6 +10,7 @@ from DataBase import SessionLocal, engine
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import timedelta, datetime
 from jose import jwt, JWTError
+
 sys.path.append("..")
 SECRET_KEY = '123rasulQq'  # мой пароль
 ALGORITHM = 'HS256'  # алгоритм который мой токен будет шифроваться
@@ -27,14 +28,18 @@ class CreateUser(BaseModel):  # модель создания Польвотел
 
 
 oauth2_bearer = OAuth2PasswordBearer(
-    tokenUrl="token")  # мы собираемся иззвлечь любые данные или что нибудь из заголовка авторизации
+    tokenUrl="auth/token-url")  # мы собираемся иззвлечь любые данные или что нибудь из заголовка авторизации
 # ______________________________________________________
 
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 models.Base.metadata.create_all(bind=engine)  # это создаёт нашу базу данных и сделает всё необходимое для таблици
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+    responses={401: {"user": "Not authorized"}}
+)
 
 
 def get_db():  # безконечная связь с базой данных
@@ -78,18 +83,18 @@ def create_access_token(username: str, user_id: int,  # создаём токе�
     encode.update({'exp': expire})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
 # @app.post("decode/token") #декодировани веб токена JWT
 async def get_current_user(token: str = Depends(oauth2_bearer)):
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
-            raise get_user_exceptions()
+            raise get_user_exception()
         return {"username": username, "id": user_id}
     except JWTError:
-        raise get_user_exceptions()
+        raise get_user_exception()
 
 
 @router.post('/create/user')  # создания пользователя и пушем в таблицу
@@ -109,7 +114,7 @@ async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)
     db.commit()
 
 
-@router.post('/token')  # проверяем пароль и имя пользователя
+@router.post('/token-url')  # проверяем пароль и имя пользователя
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),
                                  db: Session = Depends(get_db)):
     user = authenticate_user(form_data.username, form_data.password, db)
@@ -124,7 +129,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 # Exceptions
 
-def get_user_exceptions():
+def get_user_exception():
     credential_exceptions = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
