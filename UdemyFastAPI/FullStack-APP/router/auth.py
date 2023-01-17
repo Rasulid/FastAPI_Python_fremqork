@@ -1,6 +1,6 @@
 import sys
 
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, status, APIRouter, Request
 from pydantic import BaseModel
 from typing import Optional
 import models
@@ -10,10 +10,14 @@ from DataBase import SessionLocal, engine
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import timedelta, datetime
 from jose import jwt, JWTError
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 sys.path.append("..")
 SECRET_KEY = '123rasulQq'  # мой пароль
 ALGORITHM = 'HS256'  # алгоритм который мой токен будет шифроваться
+
+templates = Jinja2Templates(directory="templates") #connect HTML to app with Jinja2
 
 
 class CreateUser(BaseModel):  # модель создания Польвотеля
@@ -127,6 +131,17 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                                 user.id,
                                 expires_delta=token_expires)
     return {"token": token}
+
+
+@router.get("/", response_class=HTMLResponse)
+async def authenticate_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": Request})
+
+
+@router.get("/register", response_class=HTMLResponse)
+async def register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": Request})
+
 
 
 # Exceptions
