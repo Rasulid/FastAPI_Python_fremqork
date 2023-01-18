@@ -86,7 +86,7 @@ async def delete_user(user: dict = Depends(get_current_user), db: Session = Depe
     return "commit successes"
 
 
-@router.delete('/user/testdelete')
+@router.delete('/user/test-delete')
 async def test_delete(user_id: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     if user_id is None:
         return "None"
